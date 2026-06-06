@@ -19,6 +19,21 @@ class ArtistRecord:
     def __repr__(self):
         return repr(tuple(self))
 
+    def to_dict(self):
+        return {
+            "artist_id": self.artist_id,
+            "nickname": self.nickname,
+            "main_genre": self.main_genre,
+        }
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(
+            int(data["artist_id"]),
+            str(data["nickname"]),
+            str(data["main_genre"]),
+        )
+
 
 class AlbumRecord:
     def __init__(self, album_id, title, artist_id, release_year, label):
@@ -50,3 +65,22 @@ class AlbumRecord:
 
     def __repr__(self):
         return repr(tuple(self))
+
+    def to_dict(self):
+        return {
+            "album_id": self.album_id,
+            "title": self.title,
+            "artist_id": self.artist_id,
+            "release_year": self.release_year,
+            "label": self.label,
+        }
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(
+            int(data["album_id"]),
+            str(data["title"]),
+            int(data["artist_id"]),
+            int(data["release_year"]),
+            str(data["label"]),
+        )

@@ -1,3 +1,4 @@
+from .backend.file import FileDataBase
 from .backend.memory import MemoryDataBase
 
 
@@ -36,20 +37,20 @@ class ConsoleApplication:
             print("Артисты не найдены.")
             return
 
-        print("ID | Псевдоним | Жанр")
+        print("ID   Псевдоним   Жанр")
         print("-" * 45)
         for artist in artist_list:
-            print(f"{artist[0]} | {artist[1]} | {artist[2]}")
+            print(f"{artist[0]}   {artist[1]}   {artist[2]}")
 
     def _print_albums(self, album_list):
         if not album_list:
             print("Альбомы не найдены.")
             return
 
-        print("ID | Название | Артист ID | Год | Лейбл")
+        print("ID   Название   Артист ID   Год   Лейбл")
         print("-" * 65)
         for album in album_list:
-            print(f"{album[0]} | {album[1]} | {album[2]} | {album[3]} | {album[4]}")
+            print(f"{album[0]}   {album[1]}   {album[2]}   {album[3]}   {album[4]}")
 
     def _add_artist(self):
         print("\n  Добавление артиста  ")
@@ -210,5 +211,27 @@ class ConsoleApplication:
                 print("Неверный ввод. Повторите.")
 
 
+def select_database():
+    while True:
+        print("\nВыберите базу данных")
+        print("1. Memory")
+        print("2. File")
+        choice = input("Выберите вариант: ").strip()
+
+        if choice == "1":
+            return MemoryDataBase()
+
+        if choice == "2":
+            try:
+                return FileDataBase("data")
+            except ValueError as error:
+                print(f"Ошибка: {error}")
+                continue
+
+        print("Неверный ввод. Повторите.")
+
+
 def run(database=None):
+    if database is None:
+        database = select_database()
     ConsoleApplication(database).run()
