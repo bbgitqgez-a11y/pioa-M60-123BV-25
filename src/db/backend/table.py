@@ -100,12 +100,12 @@ class AlbumTable:
         return album
 
     def select(
-        self,
-        album_id=None,
-        title=None,
-        artist_id=None,
-        release_year=None,
-        label=None,
+            self,
+            album_id=None,
+            title=None,
+            artist_id=None,
+            release_year=None,
+            label=None,
     ):
         result = []
 

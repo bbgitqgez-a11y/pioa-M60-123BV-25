@@ -28,12 +28,12 @@ class MemoryDataBase(DataBase):
         return self.albums.create(album_id, title, artist_id, release_year, label)
 
     def select_albums(
-        self,
-        album_id=None,
-        title=None,
-        artist_id=None,
-        release_year=None,
-        label=None,
+            self,
+            album_id=None,
+            title=None,
+            artist_id=None,
+            release_year=None,
+            label=None,
     ):
         return self.albums.select(album_id, title, artist_id, release_year, label)
 
