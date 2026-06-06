@@ -92,8 +92,8 @@ class AlbumTable:
             raise ValidationError("Название альбома не может быть пустым.")
         if not self.artists.exists(artist_id):
             raise ForeignKeyError(f"Артист с id={artist_id} не существует.")
-        if release_year < 1 or release_year > 2100:
-            raise ValidationError("Год выпуска должен быть от 1 до 2100.")
+        if release_year < 1 or release_year > 2026:
+            raise ValidationError("Год выпуска должен быть от 1 до 2026.")
 
         album = AlbumRecord(album_id, title, artist_id, release_year, label.strip())
         self.records.append(album)
@@ -143,8 +143,8 @@ class AlbumTable:
 
             if year is None:
                 year = album.release_year
-            elif year < 1 or year > 2100:
-                raise ValidationError("Год выпуска должен быть от 1 до 2100.")
+            elif year < 1 or year > 2026:
+                raise ValidationError("Год выпуска должен быть от 1 до 2026.")
 
             if label is None:
                 label = album.label
