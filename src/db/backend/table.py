@@ -7,39 +7,92 @@ from .errors import (
 from .record import AlbumRecord, ArtistRecord
 
 
+ALBUM_RELEASE_YEAR_MIN = 1
+ALBUM_RELEASE_YEAR_MAX = 2026
+
+
+def _validate_int(value, field_name):
+    if type(value) is not int:
+        raise ValidationError(f"{field_name} должен быть целым числом.")
+    return value
+
+
+def _validate_optional_int(value, field_name):
+    if value is None:
+        return None
+    return _validate_int(value, field_name)
+
+
+def _validate_string(value, field_name):
+    if not isinstance(value, str):
+        raise ValidationError(f"{field_name} должен быть строкой.")
+    return value
+
+
+def _validate_optional_string(value, field_name):
+    if value is None:
+        return None
+    return _validate_string(value, field_name)
+
+
+def _validate_artist_id(artist_id):
+    artist_id = _validate_int(artist_id, "ID артиста")
+    if artist_id < 0:
+        raise ValidationError("ID артиста должен быть неотрицательным числом.")
+    return artist_id
+
+
+def _validate_album_id(album_id):
+    album_id = _validate_int(album_id, "ID альбома")
+    if album_id < 0:
+        raise ValidationError("ID альбома должен быть неотрицательным числом.")
+    return album_id
+
+
+def _validate_release_year(release_year):
+    release_year = _validate_int(release_year, "Год выпуска")
+    if (
+        release_year < ALBUM_RELEASE_YEAR_MIN
+        or release_year > ALBUM_RELEASE_YEAR_MAX
+    ):
+        raise ValidationError("Год выпуска должен быть от 1 до 2026.")
+    return release_year
+
+
 class ArtistTable:
     def __init__(self, records=None):
         self.records = records if records is not None else []
 
     def create(self, artist_id, nickname, main_genre):
-        if artist_id < 0:
-            raise ValidationError("ID артиста должен быть неотрицательным числом.")
+        artist_id = _validate_artist_id(artist_id)
         if self.exists(artist_id):
             raise DuplicateIdError(f"Артист с id={artist_id} уже существует.")
 
-        nickname = nickname.strip()
+        nickname = _validate_string(nickname, "Псевдоним артиста").strip()
         if not nickname:
             raise ValidationError("Псевдоним артиста не может быть пустым.")
 
-        artist = ArtistRecord(artist_id, nickname, main_genre.strip())
+        main_genre = _validate_string(main_genre, "Основной жанр").strip()
+        artist = ArtistRecord(artist_id, nickname, main_genre)
         self.records.append(artist)
         return artist
 
     def select(self, artist_id=None, nickname=None, main_genre=None):
-        result = []
+        artist_id = _validate_optional_int(artist_id, "ID артиста")
+        nickname = _validate_optional_string(nickname, "Псевдоним артиста")
+        main_genre = _validate_optional_string(main_genre, "Основной жанр")
 
-        for artist in self.records:
-            if artist_id is not None and artist.artist_id != artist_id:
-                continue
-            if nickname is not None and artist.nickname != nickname:
-                continue
-            if main_genre is not None and artist.main_genre != main_genre:
-                continue
-            result.append(artist)
-
-        return result
+        return [
+            ArtistRecord.from_dict(artist.to_dict())
+            for artist in self.records
+            if (artist_id is None or artist.artist_id == artist_id)
+            and (nickname is None or artist.nickname == nickname)
+            and (main_genre is None or artist.main_genre == main_genre)
+        ]
 
     def update(self, artist_id, nickname=None, main_genre=None):
+        artist_id = _validate_artist_id(artist_id)
+
         for index, artist in enumerate(self.records):
             if artist.artist_id != artist_id:
                 continue
@@ -47,14 +100,14 @@ class ArtistTable:
             if nickname is None:
                 nickname = artist.nickname
             else:
-                nickname = nickname.strip()
+                nickname = _validate_string(nickname, "Псевдоним артиста").strip()
                 if not nickname:
                     raise ValidationError("Псевдоним артиста не может быть пустым.")
 
             if main_genre is None:
                 main_genre = artist.main_genre
             else:
-                main_genre = main_genre.strip()
+                main_genre = _validate_string(main_genre, "Основной жанр").strip()
 
             updated_artist = ArtistRecord(artist_id, nickname, main_genre)
             self.records[index] = updated_artist
@@ -63,6 +116,8 @@ class ArtistTable:
         raise RecordNotFoundError(f"Артист с id={artist_id} не найден.")
 
     def delete(self, artist_id):
+        artist_id = _validate_artist_id(artist_id)
+
         for index, artist in enumerate(self.records):
             if artist.artist_id == artist_id:
                 return self.records.pop(index)
@@ -82,20 +137,20 @@ class AlbumTable:
         self.records = records if records is not None else []
 
     def create(self, album_id, title, artist_id, release_year, label):
-        if album_id < 0:
-            raise ValidationError("ID альбома должен быть неотрицательным числом.")
+        album_id = _validate_album_id(album_id)
         if self.exists(album_id):
             raise DuplicateIdError(f"Альбом с id={album_id} уже существует.")
 
-        title = title.strip()
+        title = _validate_string(title, "Название альбома").strip()
         if not title:
             raise ValidationError("Название альбома не может быть пустым.")
+        artist_id = _validate_artist_id(artist_id)
         if not self.artists.exists(artist_id):
             raise ForeignKeyError(f"Артист с id={artist_id} не существует.")
-        if release_year < 1 or release_year > 2026:
-            raise ValidationError("Год выпуска должен быть от 1 до 2026.")
+        release_year = _validate_release_year(release_year)
 
-        album = AlbumRecord(album_id, title, artist_id, release_year, label.strip())
+        label = _validate_string(label, "Лейбл").strip()
+        album = AlbumRecord(album_id, title, artist_id, release_year, label)
         self.records.append(album)
         return album
 
@@ -107,24 +162,25 @@ class AlbumTable:
             release_year=None,
             label=None,
     ):
-        result = []
+        album_id = _validate_optional_int(album_id, "ID альбома")
+        title = _validate_optional_string(title, "Название альбома")
+        artist_id = _validate_optional_int(artist_id, "ID артиста")
+        release_year = _validate_optional_int(release_year, "Год выпуска")
+        label = _validate_optional_string(label, "Лейбл")
 
-        for album in self.records:
-            if album_id is not None and album.album_id != album_id:
-                continue
-            if title is not None and album.title != title:
-                continue
-            if artist_id is not None and album.artist_id != artist_id:
-                continue
-            if release_year is not None and album.release_year != release_year:
-                continue
-            if label is not None and album.label != label:
-                continue
-            result.append(album)
-
-        return result
+        return [
+            AlbumRecord.from_dict(album.to_dict())
+            for album in self.records
+            if (album_id is None or album.album_id == album_id)
+            and (title is None or album.title == title)
+            and (artist_id is None or album.artist_id == artist_id)
+            and (release_year is None or album.release_year == release_year)
+            and (label is None or album.label == label)
+        ]
 
     def update(self, album_id, title=None, artist_id=None, year=None, label=None):
+        album_id = _validate_album_id(album_id)
+
         for index, album in enumerate(self.records):
             if album.album_id != album_id:
                 continue
@@ -132,24 +188,26 @@ class AlbumTable:
             if title is None:
                 title = album.title
             else:
-                title = title.strip()
+                title = _validate_string(title, "Название альбома").strip()
                 if not title:
                     raise ValidationError("Название альбома не может быть пустым.")
 
             if artist_id is None:
                 artist_id = album.artist_id
-            elif not self.artists.exists(artist_id):
-                raise ForeignKeyError(f"Артист с id={artist_id} не существует.")
+            else:
+                artist_id = _validate_artist_id(artist_id)
+                if not self.artists.exists(artist_id):
+                    raise ForeignKeyError(f"Артист с id={artist_id} не существует.")
 
             if year is None:
                 year = album.release_year
-            elif year < 1 or year > 2026:
-                raise ValidationError("Год выпуска должен быть от 1 до 2026.")
+            else:
+                year = _validate_release_year(year)
 
             if label is None:
                 label = album.label
             else:
-                label = label.strip()
+                label = _validate_string(label, "Лейбл").strip()
 
             updated_album = AlbumRecord(album_id, title, artist_id, year, label)
             self.records[index] = updated_album
@@ -158,6 +216,8 @@ class AlbumTable:
         raise RecordNotFoundError(f"Альбом с id={album_id} не найден.")
 
     def delete(self, album_id):
+        album_id = _validate_album_id(album_id)
+
         for index, album in enumerate(self.records):
             if album.album_id == album_id:
                 return self.records.pop(index)

@@ -16,3 +16,7 @@ class ForeignKeyError(ValueError):
 
 class ProtectedRecordError(ValueError):
     pass
+
+
+class FileDataBaseError(ValueError):
+    pass

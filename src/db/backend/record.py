@@ -1,8 +1,11 @@
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
 class ArtistRecord:
-    def __init__(self, artist_id, nickname, main_genre):
-        self.artist_id = artist_id
-        self.nickname = nickname
-        self.main_genre = main_genre
+    artist_id: int
+    nickname: str
+    main_genre: str
 
     def __iter__(self):
         return iter((self.artist_id, self.nickname, self.main_genre))
@@ -19,14 +22,29 @@ class ArtistRecord:
     def __repr__(self):
         return repr(tuple(self))
 
+    def to_dict(self):
+        return {
+            "artist_id": self.artist_id,
+            "nickname": self.nickname,
+            "main_genre": self.main_genre,
+        }
 
+    @classmethod
+    def from_dict(cls, data):
+        return cls(
+            int(data["artist_id"]),
+            str(data["nickname"]),
+            str(data["main_genre"]),
+        )
+
+
+@dataclass(frozen=True)
 class AlbumRecord:
-    def __init__(self, album_id, title, artist_id, release_year, label):
-        self.album_id = album_id
-        self.title = title
-        self.artist_id = artist_id
-        self.release_year = release_year
-        self.label = label
+    album_id: int
+    title: str
+    artist_id: int
+    release_year: int
+    label: str
 
     def __iter__(self):
         return iter(
@@ -50,3 +68,22 @@ class AlbumRecord:
 
     def __repr__(self):
         return repr(tuple(self))
+
+    def to_dict(self):
+        return {
+            "album_id": self.album_id,
+            "title": self.title,
+            "artist_id": self.artist_id,
+            "release_year": self.release_year,
+            "label": self.label,
+        }
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(
+            int(data["album_id"]),
+            str(data["title"]),
+            int(data["artist_id"]),
+            int(data["release_year"]),
+            str(data["label"]),
+        )
