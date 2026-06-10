@@ -9,8 +9,8 @@
 
 Через этот интерфейс реализованы две базы данных:
 
-- `MemoryDataBase` из `memory.py` хранит данные в оперативной памяти;
-- `FileDataBase` из `file.py` наследуется от `MemoryDataBase` и сохраняет данные в JSON.
+- `MemoryDataBase` из `memory.py` наследуется от `DataBase` и хранит данные в оперативной памяти;
+- `FileDataBase` из `file.py` наследуется от `DataBase` и сохраняет данные в JSON.
 
 `src/db/backend/record.py` содержит классы записей:
 

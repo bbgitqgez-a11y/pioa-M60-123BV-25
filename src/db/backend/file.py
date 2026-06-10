@@ -4,7 +4,12 @@ from pathlib import Path
 from .db import DataBase
 from .errors import FileDataBaseError, ProtectedRecordError
 from .record import AlbumRecord, ArtistRecord
-from .table import AlbumTable, ArtistTable
+from .table import (
+    ALBUM_RELEASE_YEAR_MAX,
+    ALBUM_RELEASE_YEAR_MIN,
+    AlbumTable,
+    ArtistTable,
+)
 
 
 class FileDataBase(DataBase):
@@ -74,7 +79,7 @@ class FileDataBase(DataBase):
         try:
             self.folder.mkdir(parents=True, exist_ok=True)
         except OSError as error:
-            raise FileDataBaseError(f"Не удалось подготовить папку: {error}")
+            raise FileDataBaseError(f"Не удалось подготовить папку: {error}") from error
 
     def _load(self):
         data = self._read_file()
@@ -84,8 +89,8 @@ class FileDataBase(DataBase):
         try:
             artists = [ArtistRecord.from_dict(item) for item in artists_data]
             albums = [AlbumRecord.from_dict(item) for item in albums_data]
-        except (KeyError, TypeError, ValueError):
-            raise FileDataBaseError("Файл базы содержит некорректные записи.")
+        except (KeyError, TypeError, ValueError) as error:
+            raise FileDataBaseError("Файл базы содержит некорректные записи.") from error
 
         self._validate(artists, albums)
         self.artists.records = artists
@@ -95,10 +100,10 @@ class FileDataBase(DataBase):
         try:
             with open(self.storage, "r", encoding="utf-8") as file:
                 data = json.load(file)
-        except json.JSONDecodeError:
-            raise FileDataBaseError("Файл базы содержит некорректный JSON.")
+        except json.JSONDecodeError as error:
+            raise FileDataBaseError("Файл базы содержит некорректный JSON.") from error
         except OSError as error:
-            raise FileDataBaseError(f"Не удалось прочитать базу: {error}")
+            raise FileDataBaseError(f"Не удалось прочитать базу: {error}") from error
 
         if not isinstance(data, dict) or not isinstance(data.get("tables"), dict):
             raise FileDataBaseError("Структура файла базы некорректна.")
@@ -130,7 +135,10 @@ class FileDataBase(DataBase):
                 raise FileDataBaseError("В таблице альбомов повторяются id.")
             if album.album_id < 0 or not album.title.strip():
                 raise FileDataBaseError("В таблице альбомов есть некорректная запись.")
-            if album.release_year < 1 or album.release_year > 2100:
+            if (
+                album.release_year < ALBUM_RELEASE_YEAR_MIN
+                or album.release_year > ALBUM_RELEASE_YEAR_MAX
+            ):
                 raise FileDataBaseError("В таблице альбомов указан некорректный год.")
             if album.artist_id not in artist_ids:
                 raise FileDataBaseError("В альбоме указан несуществующий артист.")
@@ -154,4 +162,4 @@ class FileDataBase(DataBase):
             with open(self.storage, "w", encoding="utf-8") as file:
                 json.dump(data, file, ensure_ascii=False, indent=4)
         except OSError as error:
-            raise FileDataBaseError(f"Не удалось сохранить базу: {error}")
+            raise FileDataBaseError(f"Не удалось сохранить базу: {error}") from error
