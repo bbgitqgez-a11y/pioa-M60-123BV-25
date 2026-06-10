@@ -1,0 +1,52 @@
+class ArtistRecord:
+    def __init__(self, artist_id, nickname, main_genre):
+        self.artist_id = artist_id
+        self.nickname = nickname
+        self.main_genre = main_genre
+
+    def __iter__(self):
+        return iter((self.artist_id, self.nickname, self.main_genre))
+
+    def __getitem__(self, index):
+        return tuple(self)[index]
+
+    def __len__(self):
+        return 3
+
+    def __eq__(self, other):
+        return tuple(self) == other
+
+    def __repr__(self):
+        return repr(tuple(self))
+
+
+class AlbumRecord:
+    def __init__(self, album_id, title, artist_id, release_year, label):
+        self.album_id = album_id
+        self.title = title
+        self.artist_id = artist_id
+        self.release_year = release_year
+        self.label = label
+
+    def __iter__(self):
+        return iter(
+            (
+                self.album_id,
+                self.title,
+                self.artist_id,
+                self.release_year,
+                self.label,
+            )
+        )
+
+    def __getitem__(self, index):
+        return tuple(self)[index]
+
+    def __len__(self):
+        return 5
+
+    def __eq__(self, other):
+        return tuple(self) == other
+
+    def __repr__(self):
+        return repr(tuple(self))
