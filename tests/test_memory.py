@@ -1,6 +1,13 @@
 import unittest
+from dataclasses import FrozenInstanceError
 
-from src.db.backend.errors import *
+from src.db.backend.errors import (
+    DuplicateIdError,
+    ForeignKeyError,
+    ProtectedRecordError,
+    RecordNotFoundError,
+    ValidationError,
+)
 from src.db.backend.memory import MemoryDataBase
 
 
@@ -33,6 +40,24 @@ class TestMemoryDataBase(unittest.TestCase):
         with self.assertRaises(ValidationError):
             self.db.create_artist(3, "   ", "Рок")
 
+    def test_artist_methods_validate_argument_types(self):
+        cases = [
+            lambda: self.db.create_artist("3", "Би-2", "Рок"),
+            lambda: self.db.create_artist(3, None, "Рок"),
+            lambda: self.db.create_artist(3, "Би-2", None),
+            lambda: self.db.select_artists(artist_id="1"),
+            lambda: self.db.select_artists(nickname=1),
+            lambda: self.db.update_artist("1", main_genre="Постпанк"),
+            lambda: self.db.update_artist(1, nickname=1),
+            lambda: self.db.update_artist(1, main_genre=1),
+            lambda: self.db.delete_artist("1"),
+        ]
+
+        for case in cases:
+            with self.subTest(case=case):
+                with self.assertRaises(ValidationError):
+                    case()
+
     def test_select_artists_by_id(self):
         artists = self.db.select_artists(artist_id=1)
 
@@ -53,6 +78,14 @@ class TestMemoryDataBase(unittest.TestCase):
         artists.clear()
 
         self.assertEqual(len(self.db.select_artists()), 2)
+
+    def test_select_artists_returns_immutable_records(self):
+        artist = self.db.select_artists(artist_id=1)[0]
+
+        with self.assertRaises(FrozenInstanceError):
+            artist.nickname = "Новый псевдоним"
+
+        self.assertEqual(self.db.select_artists(artist_id=1), [(1, "Кино", "Рок")])
 
     def test_update_artist_positive(self):
         updated = self.db.update_artist(1, main_genre="Постпанк")
@@ -115,6 +148,33 @@ class TestMemoryDataBase(unittest.TestCase):
     def test_create_album_wrong_year(self):
         with self.assertRaises(ValidationError):
             self.db.create_album(1, "Альбом из будущего", 1, 2200, "Лейбл")
+
+    def test_album_methods_validate_argument_types(self):
+        self.db.create_album(1, "Группа крови", 1, 1988, "Мелодия")
+
+        cases = [
+            lambda: self.db.create_album("2", "Альбом", 1, 2020, "Лейбл"),
+            lambda: self.db.create_album(2, None, 1, 2020, "Лейбл"),
+            lambda: self.db.create_album(2, "Альбом", "1", 2020, "Лейбл"),
+            lambda: self.db.create_album(2, "Альбом", 1, "2020", "Лейбл"),
+            lambda: self.db.create_album(2, "Альбом", 1, 2020, None),
+            lambda: self.db.select_albums(album_id="1"),
+            lambda: self.db.select_albums(title=1),
+            lambda: self.db.select_albums(artist_id="1"),
+            lambda: self.db.select_albums(release_year="1988"),
+            lambda: self.db.select_albums(label=1),
+            lambda: self.db.update_album("1", title="Альбом"),
+            lambda: self.db.update_album(1, title=1),
+            lambda: self.db.update_album(1, artist_id="1"),
+            lambda: self.db.update_album(1, year="1988"),
+            lambda: self.db.update_album(1, label=1),
+            lambda: self.db.delete_album("1"),
+        ]
+
+        for case in cases:
+            with self.subTest(case=case):
+                with self.assertRaises(ValidationError):
+                    case()
 
     def test_select_albums_by_fields(self):
         self.db.create_album(1, "Группа крови", 1, 1988, "Мелодия")

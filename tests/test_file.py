@@ -2,7 +2,12 @@ import json
 import unittest
 from tempfile import TemporaryDirectory
 
-from src.db.backend.errors import *
+from src.db.backend.errors import (
+    DuplicateIdError,
+    FileDataBaseError,
+    ForeignKeyError,
+    ProtectedRecordError,
+)
 from src.db.backend.file import FileDataBase
 
 
@@ -169,7 +174,7 @@ class TestFileDataBase(unittest.TestCase):
                     "album_id": 1,
                     "title": "Альбом",
                     "artist_id": 1,
-                    "release_year": 2200,
+                    "release_year": 2027,
                     "label": "Лейбл",
                 }
             ]
